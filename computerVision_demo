@@ -1,0 +1,6 @@
+import numpy as np
+import cv2
+img=cv2.imread("mumbai.png")
+img.show("demo",img)
+cv2.waitKey(0)
+cv2.destoryAllWindows()
