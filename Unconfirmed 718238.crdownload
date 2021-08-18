@@ -1,0 +1,205 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+from tensorflow.keras.layers import Conv2D,MaxPool2D,BatchNormalization,Flatten,Dense,Activation
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.metrics import categorical_crossentropy
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+import matplotlib.pyplot as plt
+import os,shutil,random,glob
+from tensorflow import keras
+import tensorflow as tf
+import numpy as np
+import cv2
+
+
+# In[2]:
+
+
+train_path='C:\\Users\\prave\\jupiter notebook\\prashu\\FamilyMembers\\train'
+test_path ='C:\\Users\\prave\\jupiter notebook\\prashu\\FamilyMembers\\test'
+valid_path='C:\\Users\\prave\\jupiter notebook\\prashu\\FamilyMembers\\valid'
+
+
+# In[3]:
+
+
+
+#train_data_agumantation=ImageDataGenerator(
+#    rescale=1./255,
+#    rotation_range=40,
+#   width_shift_range=0.4,
+#    height_shift_range=0.4,
+#    shear_range=0.3,
+#    zoom_range=0.3,
+#    horizontal_flip=True,
+#    fill_mode='nearest')
+
+
+train_data_agumantation=ImageDataGenerator(preprocessing_function=tf.keras.applications.vgg16.preprocess_input)
+
+
+# In[4]:
+
+
+x_train=train_data_agumantation.flow_from_directory(directory=train_path,target_size=(124,124),classes=['father','mother','brother','sister'],batch_size=10)
+x_valid=train_data_agumantation.flow_from_directory(directory=valid_path,target_size=(124,124),classes=['father','mother','brother','sister'],batch_size=5)
+x_test =train_data_agumantation.flow_from_directory(directory=test_path,target_size=(124,124),classes=['father','mother','brother','sister'],batch_size=5,shuffle=True)
+
+
+# In[5]:
+
+
+assert x_train.n==720
+assert x_valid.n==40
+assert x_test.n ==40
+assert x_train.num_classes==x_valid.num_classes== x_test.num_classes==4
+
+
+# In[6]:
+
+
+#separating the features and labels from raw data
+images,labels=next(x_train)
+print(labels)
+#print(len(os.listdir(train_path)))
+#images.shape
+
+
+# In[7]:
+
+
+#plot images in a single batch
+def plotImages(imgs_arr):
+    fig,axes=plt.subplots(2,10,figsize=(5,5))
+    axes=axes.flatten()
+    for img,ax in zip(imgs_arr,axes):
+        ax.imshow(img,cmap='gray')
+        ax.axis('off')
+    plt.tight_layout()
+    plt.show()
+
+
+# In[8]:
+
+
+plotImages(images)
+print(labels)
+
+
+# In[9]:
+
+
+model=Sequential([
+    ###.......feature extraction and reduction(Conv2D and Maxpooling)
+    Conv2D(filters=12,kernel_size=(3,3),activation='relu',padding='same'),
+    MaxPool2D(pool_size=(2,2),strides=2),
+    Conv2D(filters=32,kernel_size=(3,3),activation='relu',padding='same'),
+    MaxPool2D(pool_size=(2,2),strides=2),
+    ###......NEURAL NETWORK CONSTRUCTION..........###
+    Flatten(),
+    Dense(180,activation='relu'),
+    BatchNormalization(),
+    Dense(360,activation='relu'),
+    Dense(units=4,activation='softmax')
+])
+
+
+# In[10]:
+
+
+model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['accuracy'])
+
+
+# In[11]:
+
+
+model.fit(x_train,validation_data=x_valid, epochs=10,verbose=2)
+
+
+# In[12]:
+
+
+T_images,T_labels=next(x_test)
+print(T_labels)
+
+
+# In[13]:
+
+
+score=model.evaluate(T_images,T_labels)
+print(score)
+
+
+# In[14]:
+
+
+tf.keras.models.save_model(model,'..\\familyMemberRecognition')
+
+
+# # INPUT SOURCE
+
+# In[17]:
+
+
+import random
+import pyttsx3
+import cv2
+import pafy
+import youtube_dl
+
+
+# In[21]:
+
+
+# haar_file='C:\\Users\\prave\\jupiter notebook\\opencv\\haarcascade\\haarcascade_frontface_default.xml'
+#video source
+#no. of faces return model
+#model predicts the faces{ dad,mom,bro,sis,strange}
+
+url='https://youtu.be/Hs_lJWXZp78'
+data=pafy.new(url)
+data=data.getbest('mp4')
+cap=cv2.VideoCapture(0)
+cap.open(data.url)
+while True:
+    ret,frame=cap.read()
+    cv2.imshow("frame",frame)
+    if cv2.waitKey(25)& 0xFF==ord(a):
+        break
+cap.release()
+cv2.destroyAllWindows()
+def classifier():
+    l=['mom','dad','brother','sister','stranger']
+    return random.choices(l,k=1)
+
+
+# # output
+
+# In[ ]:
+
+
+def audio(relation):#classifier(facedector())
+    t2s=pyttsx3.init()
+    t2s.say('this is your'+str(relation))
+    t2s.runAndWait()
+
+
+audio(*classifier())            
+
+
+# In[16]:
+
+
+pip install youtube_dl
+
+
+# In[ ]:
+
+
+
+
